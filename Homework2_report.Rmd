@@ -4,7 +4,7 @@ output: html_document
 ---
 
 
-## Name
+## Kevin Lynch
 
 Please enter your name here.
 
@@ -12,10 +12,16 @@ Please enter your name here.
 
 Read in the data with `read_csv()` and store the data as an R object named `dataset`. Check the data to make sure all of the expected observations and variables are there.
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2)
+```
 
 ```{r}
 ## Load the data and any necessary packages here.
-
+dataset <- read.csv("~/Desktop/Statistics and Data Science/SDS 375 Data/maacs.csv.gz")
 ```
 
 ## Part 1
@@ -32,7 +38,14 @@ NOTE: For this part, do not use any plots.
 
 ```{r}
 ## Write your function here
+positive_corr_test <- function(df) {
+  model <- lm(data = df, fev1 ~ age)
+  if (coef(model)["age"] > 0) {
+    return(TRUE)
+    } else {return(FALSE)}
+}
 
+positive_corr_test(dataset)
 ```
 
 
@@ -44,13 +57,15 @@ How much does FEV1 change for a 1-year increase in the child's age?
 
 ```{r}
 ## Add your code here
-
+model <- lm(data = dataset, fev1 ~ age)
+print(summary(model))
+print("FEV1 changes by 0.171162 for every 1 year increase in a child's age")
 ```
 
 
 Write your data analysis statement interpreting the regression model here:
 
-
+When interpreting the regression model, I can determine the expected increase in FEV1 for every 1 year increase by age's coefficient. Age's coefficient is 0.171162, and thus we should expect FEV1 to increase by that for every 1 year of additional age. 
 
 ## Part 3
 
@@ -62,19 +77,20 @@ NOTE:
 
 * Do not use the code you write in Part 1 as a supporting premise
 
+
 ```{r}
 ## Add your code here
-
+ggplot(dataset, aes(x = age, y = fev1)) + geom_point()
 ```
 
 
 Write the three supporting premise statements here:
 
-1. 
+1. I can be very confident in the previous truth that the FEV1 increases with higher age, as this positive coefficient has a very high significance score, signifying p <0.001. This means that we can be greater than 99.9% confident that it is a positive coefficient.
 
-2. 
+2. Another way I can defend the premise that the coefficient is positive is that the standard deviation range of +- the standard error * 1.96 = +- 0.02152864. That range of 95% confident does not come close to containing 0, and thus is statistically significant.
 
-3. 
+3. Finally, I can plot a scatterplot of the points and visually see the trend of a higher FEV1 as age increases. Aong the scatterplot, as the age increases, the FEV1 demonstrates a trend upwards, defending my premise of a higher average FEV1 with a higher age.
 
 
 ## Part 4
@@ -90,19 +106,47 @@ For statements involving plots, instead of returning `TRUE` or `FALSE`, you func
 
 ```{r}
 ## Function for supporting premise statement 1
+premise_statement_1 <- function(df) {
+  model <- lm(data = df, fev1 ~ age)
+  coef <- summary(model)$coefficients["age", "Estimate"]
+  p  <- summary(model)$coefficients["age", "Pr(>|t|)"]
+  
+  return(coef > 0 && p < 0.001)
+  # This ensures the coefficient is positive and the p is statistically significant to that degree
+}
 
+premise_statement_1(dataset)
 ```
 
 
 ```{r}
 ## Function for supporting premise statement 2
+premise_statement_2 <- function(df) {
+  model <- lm(data = df, fev1 ~ age)
+  confidence_interval <- confint(model, "age", level = 0.95)
 
+  return(confidence_interval[1] > 0 & confidence_interval[2] > 0)
+}
+
+premise_statement_2(dataset)
 ```
 
 
 ```{r}
 ## Function for supporting premise statement 3
+premise_statement_3 <- function(df) {
+plot_true <- ggplot(df, aes(x = age, y = fev1)) + geom_point() + labs(title = "Actual Data")
+    
+print(plot_true) 
 
+sim_dataset <- data.frame(
+  age = c(5, 7, 9, 11, 13, 15, 17, 19, 21, 23),
+  fev1 = c(1.1, 1.3, 1.4, 1.6, 1.7, 2.0, 2.2, 2.5, 2.7, 2.9))
+plot_sim <- ggplot(sim_dataset, aes(x = age, y = fev1)) + geom_point() + labs(title = "Simulated Data")
+    
+print(plot_sim) 
+}
+premise_statement_3(dataset)
 ```
 
 Execute each of your function and show that the produce the expected output.
@@ -112,7 +156,9 @@ Execute each of your function and show that the produce the expected output.
 
 ## Part 5
 
-Describe one alternative to the primary statement "FEV1 values in children are higher in older children relative to younger children". 
+Describe one alternative to the primary statement "FEV1 values in children are higher in older children relative to younger children".
+
+One alternative to the primary statement is that as children get older they understand their role in the test for FEV1, and try to score higher in the test, inflating their values comparatively to when they weren't aware of the methods of the test.
 
 Create a fault tree for the alternative outcome describing how the alternative outcome could be realized in the data even if the primary statement were true.
 
